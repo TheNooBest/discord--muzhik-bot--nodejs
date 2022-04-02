@@ -2,6 +2,8 @@ import { Client, Intents } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
+import { CommandManager } from './commands';
+
 dotenv.config()
 
 
@@ -31,24 +33,10 @@ const client = new Client({
         Intents.FLAGS.GUILD_MESSAGES,
     ],
 });
+const commandManager = new CommandManager();
 
 
 client.on('ready', () => {
-    console.log('Bot is ready');
-
-    for (const [snowflake, guild] of client.guilds.cache) {
-        const commands = guild.commands;
-
-        commands.create({
-            name: 'ping',
-            description: 'Reply "pong"',
-        });
-        commands.create({
-            name: 'day',
-            description: 'Get current day of week',
-        });
-    }
-
     const task = cron.schedule('0 10 * * *', async (now) => {
         for (const [snowflake, guild] of client.guilds.cache) {
             await guild.systemChannel?.send({
@@ -59,6 +47,16 @@ client.on('ready', () => {
     }, {
         timezone: 'Europe/Moscow',
     });
+    
+    for (const [snowflake, cmd] of client.application?.commands.cache ?? []) {
+        cmd.delete();
+    }
+
+    for (const [cmdName, cmd] of commandManager.commandsMap) {
+        client.application?.commands.create(cmd.commandData);
+    }
+
+    console.log('Bot is ready');
 });
 
 client.on('messageCreate', (message) => {
@@ -74,41 +72,7 @@ client.on('interactionCreate', async (interaction) => {
         return;
     }
 
-    const { commandName, options } = interaction;
-
-    switch (commandName) {
-        case 'ping':
-            {
-                try {
-                    interaction.reply({
-                        content: 'pong',
-                        ephemeral: true,
-                    });
-                } catch (error) {
-                    console.log(error);
-                }
-            }
-            break;
-
-        case 'day':
-            {
-                const now = new Date();
-                interaction.reply({
-                    content: `СЕГОДНЯ ${days[now.getDay()]}`,
-                });
-            }
-            break;
-        
-        case 'day_img':
-            {
-                const now = new Date();
-                interaction.reply({
-                    content: `СЕГОДНЯ ${days[now.getDay()]}`,
-                    files: [days_imgs[now.getDay()]],
-                });
-            }
-            break;
-    }
+    commandManager.handle(interaction);
 });
 
 
