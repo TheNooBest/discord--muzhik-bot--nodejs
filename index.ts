@@ -1,5 +1,7 @@
-import { Client, Intents } from 'discord.js'
-import dotenv from 'dotenv'
+import { Client, Intents } from 'discord.js';
+import dotenv from 'dotenv';
+import cron from 'node-cron';
+
 dotenv.config()
 
 
@@ -46,6 +48,17 @@ client.on('ready', () => {
             description: 'Get current day of week',
         });
     }
+
+    const task = cron.schedule('0 10 * * *', async (now) => {
+        for (const [snowflake, guild] of client.guilds.cache) {
+            await guild.systemChannel?.send({
+                content: `СЕГОДНЯ ${days[now.getDay()]}`,
+                files: [days_imgs[now.getDay()]],
+            });
+        }
+    }, {
+        timezone: 'Europe/Moscow',
+    });
 });
 
 client.on('messageCreate', (message) => {
