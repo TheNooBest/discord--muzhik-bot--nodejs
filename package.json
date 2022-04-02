@@ -1,0 +1,25 @@
+{
+  "name": "discord--muzhik-bot--nodejs",
+  "version": "0.0.1",
+  "description": "A Discord bot for real \"muzhiki\"",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheNooBest/discord--muzhik-bot--nodejs.git"
+  },
+  "keywords": [
+    "discord",
+    "bot"
+  ],
+  "author": "TheNooBest",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^13.6.0",
+    "dotenv": "^16.0.0",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  }
+}
