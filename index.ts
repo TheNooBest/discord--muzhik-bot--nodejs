@@ -33,10 +33,10 @@ const client = new Client({
         Intents.FLAGS.GUILD_MESSAGES,
     ],
 });
-const commandManager = new CommandManager();
+let commandManager: CommandManager;
 
 
-client.on('ready', () => {
+client.on('ready', async () => {
     const task = cron.schedule('0 10 * * *', async (now) => {
         for (const [snowflake, guild] of client.guilds.cache) {
             await guild.systemChannel?.send({
@@ -47,14 +47,9 @@ client.on('ready', () => {
     }, {
         timezone: 'Europe/Moscow',
     });
-    
-    for (const [snowflake, cmd] of client.application?.commands.cache ?? []) {
-        cmd.delete();
-    }
 
-    for (const [cmdName, cmd] of commandManager.commandsMap) {
-        client.application?.commands.create(cmd.commandData);
-    }
+    commandManager = new CommandManager(client);
+    await commandManager.syncCommands();
 
     console.log('Bot is ready');
 });

@@ -1,13 +1,13 @@
-import { ApplicationCommandData, CommandInteraction } from 'discord.js';
+import { CommandInteraction, ApplicationCommandData } from 'discord.js';
 import { Command } from './command.interface';
 
-export class PingCommand implements Command {
-    readonly name = 'ping';
-    readonly description = 'Ping-pong command';
+export class TestCommand implements Command {
+    readonly name = 'test';
+    readonly description = 'Test command';
 
     async handler(interaction: CommandInteraction): Promise<void> {
         interaction.reply({
-            content: 'Pong!',
+            content: 'Test!',
             ephemeral: true,
         });
     };
@@ -17,4 +17,5 @@ export class PingCommand implements Command {
             description: this.description,
         };
     };
+
 }
