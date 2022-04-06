@@ -1,22 +1,32 @@
+import { Client, CommandInteraction, Snowflake } from 'discord.js';
 import { Command } from './command.interface';
 import { PingCommand } from './ping.command';
 import { DayCommand, DayImgCommand } from './day.command';
 import { TestCommand } from './test.command';
-import { ApplicationCommand, Client, CommandInteraction, GuildResolvable, Snowflake } from 'discord.js';
 
 const commands = [
     PingCommand,
     DayCommand,
     DayImgCommand,
-    // TestCommand,
+];
+
+const testCommands = [
+    TestCommand,
 ];
 
 export class CommandManager {
     private readonly commandsMap: Map<Snowflake, Command> = new Map();
 
-    constructor(private readonly client: Client) {}
+    constructor(
+        private readonly client: Client,
+        private readonly testRun: boolean = false,
+    ) {}
 
     async syncCommands(): Promise<void> {
+        if (this.testRun) {
+            return this.runTest();
+        }
+
         if (!this.client.application) {
             console.warn('Client is not initialized fully');
             return;
@@ -56,6 +66,27 @@ export class CommandManager {
             await command.handler(interaction);
         } catch (error) {
             console.error(error);
+        }
+    }
+
+    private async runTest(): Promise<void> {
+        const testGuildId = process.env.TEST_GUILD;
+        if (!testGuildId) {
+            console.warn('Test guild id is missing');
+            return;
+        }
+
+        await this.client.guilds.fetch();
+        const guild = this.client.guilds.cache.get(testGuildId);
+        if (!guild) {
+            console.warn('Guild not found');
+            return;
+        }
+
+        for (const cmdClass of testCommands) {
+            const cmd = new cmdClass();
+            const _cmd = await guild.commands.create(cmd.commandData);
+            this.commandsMap.set(_cmd.id, cmd);
         }
     }
 }

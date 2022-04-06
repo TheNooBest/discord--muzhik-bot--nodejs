@@ -37,18 +37,22 @@ let commandManager: CommandManager;
 
 
 client.on('ready', async () => {
-    const task = cron.schedule('0 10 * * *', async (now) => {
-        for (const [snowflake, guild] of client.guilds.cache) {
-            await guild.systemChannel?.send({
-                content: `СЕГОДНЯ ${days[now.getDay()]}`,
-                files: [days_imgs[now.getDay()]],
-            });
-        }
-    }, {
-        timezone: 'Europe/Moscow',
-    });
+    const testRun = process.env.TEST_RUN === 'true';
 
-    commandManager = new CommandManager(client);
+    if (!testRun) {
+        const task = cron.schedule('0 10 * * *', async (now) => {
+            for (const [snowflake, guild] of client.guilds.cache) {
+                await guild.systemChannel?.send({
+                    content: `СЕГОДНЯ ${days[now.getDay()]}`,
+                    files: [days_imgs[now.getDay()]],
+                });
+            }
+        }, {
+            timezone: 'Europe/Moscow',
+        });
+    }
+
+    commandManager = new CommandManager(client, testRun);
     await commandManager.syncCommands();
 
     console.log('Bot is ready');
