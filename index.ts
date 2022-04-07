@@ -1,4 +1,4 @@
-import { Client, Intents } from 'discord.js';
+import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
@@ -31,8 +31,8 @@ const days_imgs = [
 
 const client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
+        'GUILDS',
+        'GUILD_MESSAGES',
     ],
 });
 let commandManager: CommandManager;

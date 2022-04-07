@@ -4,7 +4,7 @@ import { DBService } from '../database';
 import { Command } from './command.interface';
 
 import { PingCommand } from './ping.command';
-import { DayCommand, DayImgCommand } from './day.command';
+import { DayImgCommand } from './day.command';
 import { TestCommand } from './test.command';
 import { ThinkCommand } from './think.command';
 import {
@@ -13,19 +13,18 @@ import {
     SetDailyDayNotificationRoleCommand,
 } from './set-ddn.command';
 
-const commands: Command[] = [
+const commands: { new(): Command }[] = [
     PingCommand,
-    DayCommand,
     DayImgCommand,
     SetDailyDayNotificationFlagCommand,
     SetDailyDayNotificationChannelCommand,
     SetDailyDayNotificationRoleCommand,
-].map(cl => new cl());
+];
 
-const testCommands: Command[] = [
+const testCommands: { new(): Command }[] = [
     TestCommand,
     ThinkCommand,
-].map(cl => new cl());
+];
 
 export class CommandManager {
     private readonly commandsMap: Map<Snowflake, Command> = new Map();
@@ -46,30 +45,27 @@ export class CommandManager {
             return;
         }
 
-        // TODO: Promise.all()
+        const commandsObjects = commands.map(c => new c());
+        const globalCommands = commandsObjects.filter(c => c.type === 'global');
+        const guildCommands = commandsObjects.filter(c => c.type === 'guild');
+
         await this.client.application.commands.fetch();
-        for (const [snowflake, cmd] of this.client.application.commands.cache) {
-            await cmd.delete();
-        }
+        await Promise.all(this.client.application.commands.cache.map(c => c.delete()));
 
-        // TODO: Promise.all()
-        for (const cmd of commands.filter(cmd => cmd.type === 'global')) {
-            const _cmd = await this.client.application.commands.create(cmd.commandData);
+        await Promise.all(globalCommands.map(async cmd => {
+            const _cmd = await this.client.application!.commands.create(cmd.commandData);
             this.commandsMap.set(_cmd.id, cmd);
-        }
+        }));
 
-        // TODO: Promise.all()
         await this.client.guilds.fetch();
-        for (const [snowflake, guild] of this.client.guilds.cache) {
+        await Promise.all(this.client.guilds.cache.map(async guild => {
             await guild.commands.fetch();
-            for (const [snowflake, cmd] of guild.commands.cache) {
-                cmd.delete();
-            }
-            for (const cmd of commands.filter(cmd => cmd.type === 'guild')) {
-                const _cmd = await this.client.application.commands.create(cmd.commandData);
+            await Promise.all(guild.commands.cache.map(c => c.delete()));
+            await Promise.all(guildCommands.map(async cmd => {
+                const _cmd = await this.client.application!.commands.create(cmd.commandData);
                 this.commandsMap.set(_cmd.id, cmd);
-            }
-        }
+            }));
+        }));
     }
 
     async handle(interaction: CommandInteraction): Promise<void> {
@@ -92,6 +88,8 @@ export class CommandManager {
             console.warn('Test guild id is missing');
             return;
         }
+        
+        const commandsObjects = testCommands.map(c => new c());
 
         await this.client.guilds.fetch();
         const guild = this.client.guilds.cache.get(testGuildId);
@@ -100,13 +98,10 @@ export class CommandManager {
             return;
         }
 
-        // TODO: Promise.all()
         await guild.commands.fetch();
-        for (const [snowflake, cmd] of guild.commands.cache) {
-            cmd.delete();
-        }
+        await Promise.all(guild.commands.cache.map(c => c.delete()));
 
-        for (const cmd of testCommands) {
+        for (const cmd of commandsObjects) {
             const _cmd = await guild.commands.create(cmd.commandData);
             this.commandsMap.set(_cmd.id, cmd);
         }
