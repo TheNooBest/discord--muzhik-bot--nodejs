@@ -1,12 +1,13 @@
 import { CommandInteraction, ApplicationCommandData } from 'discord.js';
-import { Command } from './command.interface';
+import { Command, CommandType } from './command.interface';
 
 export class TestCommand implements Command {
-    readonly name = 'test';
-    readonly description = 'Test command';
+    readonly type: CommandType = 'global';
+    readonly name: string = 'test';
+    readonly description: string = 'Test command';
 
     async handler(interaction: CommandInteraction): Promise<void> {
-        interaction.reply({
+        await interaction.reply({
             content: 'Test!',
             ephemeral: true,
         });
@@ -17,5 +18,4 @@ export class TestCommand implements Command {
             description: this.description,
         };
     };
-
 }

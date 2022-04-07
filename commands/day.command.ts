@@ -1,5 +1,5 @@
 import { ApplicationCommandData, CommandInteraction } from 'discord.js';
-import { Command } from './command.interface';
+import { Command, CommandType } from './command.interface';
 
 const days = [
     'ВОСКРЕСЕНЬЕ',
@@ -21,12 +21,13 @@ const days_imgs = [
 ];
 
 export class DayCommand implements Command {
-    readonly name = 'day';
-    readonly description = 'Get current day of week';
+    readonly type: CommandType = 'global';
+    readonly name: string = 'day';
+    readonly description: string = 'Get current day of week';
 
     async handler(interaction: CommandInteraction): Promise<void> {
         const now = new Date();
-        interaction.reply({
+        await interaction.reply({
             content: `СЕГОДНЯ ${days[now.getDay()]}`,
         });
     };
@@ -39,12 +40,13 @@ export class DayCommand implements Command {
 }
 
 export class DayImgCommand implements Command {
-    readonly name = 'day_img';
-    readonly description = 'Get current day of week (with picture)';
+    readonly type: CommandType = 'global';
+    readonly name: string = 'day_img';
+    readonly description: string = 'Get current day of week (with picture)';
 
     async handler(interaction: CommandInteraction): Promise<void> {
         const now = new Date();
-        interaction.reply({
+        await interaction.reply({
             content: `СЕГОДНЯ ${days[now.getDay()]}`,
             files: [days_imgs[now.getDay()]],
         });

@@ -1,6 +1,9 @@
 import { ApplicationCommandData, CommandInteraction } from 'discord.js';
+import { DBService } from '../database';
 
+export type CommandType = 'guild' | 'global';
 export interface Command {
-    handler: (interaction: CommandInteraction) => Promise<void>;
+    type: CommandType;
+    handler: (interaction: CommandInteraction, dbService: DBService) => Promise<void>;
     commandData: ApplicationCommandData;
 }

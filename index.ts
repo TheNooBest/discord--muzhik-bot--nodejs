@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cron from 'node-cron';
 
 import { CommandManager } from './commands';
+import { DBService } from './database';
 
 dotenv.config()
 
@@ -34,25 +35,73 @@ const client = new Client({
     ],
 });
 let commandManager: CommandManager;
-
+const dbService = new DBService();
 
 client.on('ready', async () => {
     const testRun = process.env.TEST_RUN === 'true';
+    await dbService.init();
 
     if (!testRun) {
         const task = cron.schedule('0 10 * * *', async (now) => {
+            console.log('Job');
             for (const [snowflake, guild] of client.guilds.cache) {
-                await guild.systemChannel?.send({
-                    content: `СЕГОДНЯ ${days[now.getDay()]}`,
-                    files: [days_imgs[now.getDay()]],
-                });
+                const settings = await dbService.find(guild);
+                if (settings?.dailyDayNotify?.enabled) {
+                    let content = `СЕГОДНЯ ${days[now.getDay()]}`;
+                    const files = [days_imgs[now.getDay()]];
+
+                    if (settings.dailyDayNotify.roleTag) {
+                        const roleString = settings.dailyDayNotify.roleTag === guild.roles.everyone.id ? '@everyone' : `<@&${settings.dailyDayNotify.roleTag}>`;
+                        content = `${roleString}\n` + content;
+                    }
+
+                    if (settings.dailyDayNotify.channelToNotify) {
+                        const channel = guild.channels.cache.get(settings.dailyDayNotify.channelToNotify);
+                        if (channel?.isText()) {
+                            await channel.send({ content, files });
+                        }
+                    } else {
+                        await guild.systemChannel?.send({ content, files });
+                    }
+                }
             }
         }, {
             timezone: 'Europe/Moscow',
         });
+    } else {
+        await client.guilds.fetch();
+        const guild = client.guilds.cache.get(process.env.TEST_GUILD!);
+        console.log(guild ? await dbService.find(guild) : undefined);
+
+        if (guild) {
+            const task = cron.schedule('* * * * *', async (now) => {
+                console.log('Job');
+                const settings = await dbService.find(guild);
+                if (settings?.dailyDayNotify?.enabled) {
+                    let content = `СЕГОДНЯ ${days[now.getDay()]}`;
+                    const files = [days_imgs[now.getDay()]];
+
+                    if (settings.dailyDayNotify.roleTag) {
+                        const roleString = settings.dailyDayNotify.roleTag === guild.roles.everyone.id ? '@everyone' : `<@&${settings.dailyDayNotify.roleTag}>`;
+                        content = `${roleString}\n` + content;
+                    }
+
+                    if (settings.dailyDayNotify.channelToNotify) {
+                        const channel = guild.channels.cache.get(settings.dailyDayNotify.channelToNotify);
+                        if (channel?.isText()) {
+                            await channel.send({ content, files });
+                        }
+                    } else {
+                        await guild.systemChannel?.send({ content, files });
+                    }
+                }
+            }, {
+                timezone: 'Europe/Moscow',
+            });
+        }
     }
 
-    commandManager = new CommandManager(client, testRun);
+    commandManager = new CommandManager(client, dbService, testRun);
     await commandManager.syncCommands();
 
     console.log('Bot is ready');

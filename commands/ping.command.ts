@@ -1,12 +1,13 @@
 import { ApplicationCommandData, CommandInteraction } from 'discord.js';
-import { Command } from './command.interface';
+import { Command, CommandType } from './command.interface';
 
 export class PingCommand implements Command {
-    readonly name = 'ping';
-    readonly description = 'Ping-pong command';
+    readonly type: CommandType = 'global';
+    readonly name: string = 'ping';
+    readonly description: string = 'Ping-pong command';
 
     async handler(interaction: CommandInteraction): Promise<void> {
-        interaction.reply({
+        await interaction.reply({
             content: 'Pong!',
             ephemeral: true,
         });
