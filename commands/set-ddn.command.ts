@@ -15,7 +15,7 @@ export class SetDailyDayNotificationFlagCommand implements Command {
             return;
         }
 
-        await interaction.deferReply({ fetchReply: true });
+        await interaction.deferReply();
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
@@ -59,7 +59,7 @@ export class SetDailyDayNotificationChannelCommand implements Command {
             return;
         }
 
-        await interaction.deferReply({ fetchReply: true });
+        await interaction.deferReply();
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
@@ -102,7 +102,7 @@ export class SetDailyDayNotificationRoleCommand implements Command {
             return;
         }
 
-        await interaction.deferReply({ fetchReply: true });
+        await interaction.deferReply();
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });

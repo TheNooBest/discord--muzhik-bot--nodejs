@@ -4,6 +4,7 @@ import cron from 'node-cron';
 
 import { CommandManager } from './commands';
 import { DBService } from './database';
+import { tagRole } from './utils';
 
 dotenv.config()
 
@@ -46,22 +47,22 @@ client.on('ready', async () => {
             console.log('Job');
             for (const [snowflake, guild] of client.guilds.cache) {
                 const settings = await dbService.find(guild);
-                if (settings?.dailyDayNotify?.enabled) {
-                    let content = `СЕГОДНЯ ${days[now.getDay()]}`;
+                if (!settings?.dailyDayNotify)
+                    continue;
+
+                const { enabled, channelToNotify, roleTag } = settings.dailyDayNotify;
+                if (enabled) {
+                    const content = roleTag
+                        ? `${tagRole(roleTag, guild.roles.everyone.id)}\n` +
+                          `СЕГОДНЯ ${days[now.getDay()]}`
+                        : `СЕГОДНЯ ${days[now.getDay()]}`;
                     const files = [days_imgs[now.getDay()]];
 
-                    if (settings.dailyDayNotify.roleTag) {
-                        const roleString = settings.dailyDayNotify.roleTag === guild.roles.everyone.id ? '@everyone' : `<@&${settings.dailyDayNotify.roleTag}>`;
-                        content = `${roleString}\n` + content;
-                    }
-
-                    if (settings.dailyDayNotify.channelToNotify) {
-                        const channel = guild.channels.cache.get(settings.dailyDayNotify.channelToNotify);
-                        if (channel?.isText()) {
-                            await channel.send({ content, files });
-                        }
-                    } else {
-                        await guild.systemChannel?.send({ content, files });
+                    const channel = channelToNotify
+                        ? guild.channels.cache.get(channelToNotify)
+                        : guild.systemChannel;
+                    if (channel?.isText()) {
+                        await channel.send({ content, files });
                     }
                 }
             }
@@ -77,22 +78,22 @@ client.on('ready', async () => {
             const task = cron.schedule('* * * * *', async (now) => {
                 console.log('Job');
                 const settings = await dbService.find(guild);
-                if (settings?.dailyDayNotify?.enabled) {
-                    let content = `СЕГОДНЯ ${days[now.getDay()]}`;
+                if (!settings?.dailyDayNotify)
+                    return;
+
+                const { enabled, channelToNotify, roleTag } = settings.dailyDayNotify;
+                if (enabled) {
+                    const content = roleTag
+                        ? `${tagRole(roleTag, guild.roles.everyone.id)}\n` +
+                          `СЕГОДНЯ ${days[now.getDay()]}`
+                        : `СЕГОДНЯ ${days[now.getDay()]}`;
                     const files = [days_imgs[now.getDay()]];
 
-                    if (settings.dailyDayNotify.roleTag) {
-                        const roleString = settings.dailyDayNotify.roleTag === guild.roles.everyone.id ? '@everyone' : `<@&${settings.dailyDayNotify.roleTag}>`;
-                        content = `${roleString}\n` + content;
-                    }
-
-                    if (settings.dailyDayNotify.channelToNotify) {
-                        const channel = guild.channels.cache.get(settings.dailyDayNotify.channelToNotify);
-                        if (channel?.isText()) {
-                            await channel.send({ content, files });
-                        }
-                    } else {
-                        await guild.systemChannel?.send({ content, files });
+                    const channel = channelToNotify
+                        ? guild.channels.cache.get(channelToNotify)
+                        : guild.systemChannel;
+                    if (channel?.isText()) {
+                        await channel.send({ content, files });
                     }
                 }
             }, {

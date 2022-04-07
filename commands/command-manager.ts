@@ -1,15 +1,17 @@
 import { Client, CommandInteraction, Snowflake } from 'discord.js';
+import { DBService } from '../database';
+
 import { Command } from './command.interface';
 
 import { PingCommand } from './ping.command';
 import { DayCommand, DayImgCommand } from './day.command';
 import { TestCommand } from './test.command';
+import { ThinkCommand } from './think.command';
 import {
     SetDailyDayNotificationFlagCommand,
     SetDailyDayNotificationChannelCommand,
     SetDailyDayNotificationRoleCommand,
 } from './set-ddn.command';
-import { DBService } from '../database';
 
 const commands: Command[] = [
     PingCommand,
@@ -22,6 +24,7 @@ const commands: Command[] = [
 
 const testCommands: Command[] = [
     TestCommand,
+    ThinkCommand,
 ].map(cl => new cl());
 
 export class CommandManager {
