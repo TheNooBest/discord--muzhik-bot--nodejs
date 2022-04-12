@@ -1,8 +1,9 @@
 import { CommandInteraction, ApplicationCommandData } from 'discord.js';
-import { DBService, GuildSettingsEntity } from '../database';
-import { Command, CommandType } from './command.interface';
+import { DBService, GuildSettingsEntity } from '@database';
+import { Command, CommandScope, CommandType } from '../command.interface';
 
 export class SetDailyDayNotificationFlagCommand implements Command {
+    readonly scope: CommandScope = 'prod';
     readonly type: CommandType = 'guild';
     readonly name: string = 'set-ddn-flag';
     readonly description: string = 'Set "Daily Day Notification" flag (notify or not)';
@@ -47,9 +48,10 @@ export class SetDailyDayNotificationFlagCommand implements Command {
 
 
 export class SetDailyDayNotificationChannelCommand implements Command {
+    readonly scope: CommandScope = 'prod';
     readonly type: CommandType = 'guild';
     readonly name: string = 'set-ddn-channel';
-    readonly description: string = 'Set "Daily Day Notification" channel (where to post notifications)';
+    readonly description: string = 'Set "Daily Day Notification" channel (where to post notifications). Keep empty to set system channel';
 
     async handler(interaction: CommandInteraction, dbService: DBService): Promise<void> {
         if (!interaction.guild) {
@@ -67,6 +69,15 @@ export class SetDailyDayNotificationChannelCommand implements Command {
             settings.dailyDayNotify = { enabled: false };
         }
         settings.dailyDayNotify.channelToNotify = options.getChannel('channel')?.id;
+
+        const validate = this.validate(interaction);
+        if (!validate.isCorrect) {
+            await interaction.editReply({
+                content: validate.message,
+            });
+            return;
+        }
+
         await dbService.save(settings);
 
         await interaction.editReply({
@@ -86,13 +97,24 @@ export class SetDailyDayNotificationChannelCommand implements Command {
             ],
         };
     };
+
+    private validate(interaction: CommandInteraction): { isCorrect: boolean, message: string } {
+        const options = interaction.options;
+        const channelId = options.getChannel('channel')!.id;
+        const channel = interaction.guild!.channels.cache.get(channelId);
+        if (!channel?.isText()) {
+            return { isCorrect: false, message: 'Set text channel, please' };
+        }
+        return { isCorrect: true, message: '' };
+    }
 }
 
 
 export class SetDailyDayNotificationRoleCommand implements Command {
+    readonly scope: CommandScope = 'prod';
     readonly type: CommandType = 'guild';
     readonly name: string = 'set-ddn-role';
-    readonly description: string = 'Set "Daily Day Notification" role (role to tag)';
+    readonly description: string = 'Set "Daily Day Notification" role (role to tag). Keep it empty for no tag';
 
     async handler(interaction: CommandInteraction, dbService: DBService): Promise<void> {
         if (!interaction.guild) {

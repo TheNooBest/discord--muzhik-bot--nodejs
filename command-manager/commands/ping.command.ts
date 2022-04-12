@@ -1,7 +1,8 @@
 import { ApplicationCommandData, CommandInteraction } from 'discord.js';
-import { Command, CommandType } from './command.interface';
+import { Command, CommandScope, CommandType } from '../command.interface';
 
 export class PingCommand implements Command {
+    readonly scope: CommandScope = 'prod';
     readonly type: CommandType = 'global';
     readonly name: string = 'ping';
     readonly description: string = 'Ping-pong command';

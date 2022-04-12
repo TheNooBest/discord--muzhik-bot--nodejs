@@ -1,7 +1,8 @@
 import { CommandInteraction, ApplicationCommandData } from 'discord.js';
-import { Command, CommandType } from './command.interface';
+import { Command, CommandScope, CommandType } from '../command.interface';
 
 export class TestCommand implements Command {
+    readonly scope: CommandScope = 'test';
     readonly type: CommandType = 'global';
     readonly name: string = 'test';
     readonly description: string = 'Test command';

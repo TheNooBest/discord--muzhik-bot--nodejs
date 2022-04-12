@@ -1,30 +1,8 @@
 import { Client, CommandInteraction, Snowflake } from 'discord.js';
-import { DBService } from '../database';
+import { DBService } from '@database';
 
 import { Command } from './command.interface';
-
-import { PingCommand } from './ping.command';
-import { DayImgCommand } from './day.command';
-import { TestCommand } from './test.command';
-import { ThinkCommand } from './think.command';
-import {
-    SetDailyDayNotificationFlagCommand,
-    SetDailyDayNotificationChannelCommand,
-    SetDailyDayNotificationRoleCommand,
-} from './set-ddn.command';
-
-const commands: { new(): Command }[] = [
-    PingCommand,
-    DayImgCommand,
-    ThinkCommand,
-    SetDailyDayNotificationFlagCommand,
-    SetDailyDayNotificationChannelCommand,
-    SetDailyDayNotificationRoleCommand,
-];
-
-const testCommands: { new(): Command }[] = [
-    TestCommand,
-];
+import commands from './commands';
 
 export class CommandManager {
     private readonly commandsMap: Map<Snowflake, Command> = new Map();
@@ -45,7 +23,7 @@ export class CommandManager {
             return;
         }
 
-        const commandsObjects = commands.map(c => new c());
+        const commandsObjects = commands.map(c => new c()).filter(c => c.scope === 'prod');
         const globalCommands = commandsObjects.filter(c => c.type === 'global');
         const guildCommands = commandsObjects.filter(c => c.type === 'guild');
 
@@ -88,8 +66,8 @@ export class CommandManager {
             console.warn('Test guild id is missing');
             return;
         }
-        
-        const commandsObjects = testCommands.map(c => new c());
+
+        const commandsObjects = commands.map(c => new c()).filter(c => c.scope === 'test');
 
         await this.client.guilds.fetch();
         const guild = this.client.guilds.cache.get(testGuildId);

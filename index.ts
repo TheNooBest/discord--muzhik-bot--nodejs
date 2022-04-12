@@ -2,8 +2,8 @@ import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
-import { CommandManager } from './commands';
-import { DBService } from './database';
+import { CommandManager } from '@command-manager';
+import { DBService } from '@database';
 import { tagRole } from './utils';
 
 dotenv.config()
@@ -44,7 +44,6 @@ client.on('ready', async () => {
 
     if (!testRun) {
         const task = cron.schedule('0 10 * * *', async (now) => {
-            console.log('Job');
             for (const [snowflake, guild] of client.guilds.cache) {
                 const settings = await dbService.find(guild);
                 if (!settings?.dailyDayNotify)
