@@ -68,37 +68,6 @@ client.on('ready', async () => {
         }, {
             timezone: 'Europe/Moscow',
         });
-    } else {
-        await client.guilds.fetch();
-        const guild = client.guilds.cache.get(process.env.TEST_GUILD!);
-        console.log(guild ? await dbService.find(guild) : undefined);
-
-        if (guild) {
-            const task = cron.schedule('* * * * *', async (now) => {
-                console.log('Job');
-                const settings = await dbService.find(guild);
-                if (!settings?.dailyDayNotify)
-                    return;
-
-                const { enabled, channelToNotify, roleTag } = settings.dailyDayNotify;
-                if (enabled) {
-                    const content = roleTag
-                        ? `${tagRole(roleTag, guild.roles.everyone.id)}\n` +
-                          `СЕГОДНЯ ${days[now.getDay()]}`
-                        : `СЕГОДНЯ ${days[now.getDay()]}`;
-                    const files = [days_imgs[now.getDay()]];
-
-                    const channel = channelToNotify
-                        ? guild.channels.cache.get(channelToNotify)
-                        : guild.systemChannel;
-                    if (channel?.isText()) {
-                        await channel.send({ content, files });
-                    }
-                }
-            }, {
-                timezone: 'Europe/Moscow',
-            });
-        }
     }
 
     commandManager = new CommandManager(client, dbService, testRun);

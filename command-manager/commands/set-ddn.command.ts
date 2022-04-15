@@ -29,7 +29,7 @@ export class SetDailyDayNotificationFlagCommand implements Command {
         await interaction.editReply({
             content: 'Done!',
         });
-    };
+    }
     get commandData(): ApplicationCommandData {
         return {
             name: this.name,
@@ -43,7 +43,7 @@ export class SetDailyDayNotificationFlagCommand implements Command {
                 },
             ],
         };
-    };
+    }
 }
 
 
@@ -54,9 +54,11 @@ export class SetDailyDayNotificationChannelCommand implements Command {
     readonly description: string = 'Set "Daily Day Notification" channel (where to post notifications). Keep empty to set system channel';
 
     async handler(interaction: CommandInteraction, dbService: DBService): Promise<void> {
-        if (!interaction.guild) {
+        const validate = this.validate(interaction);
+        if (!validate.isCorrect) {
             await interaction.reply({
-                content: 'This is guild command, wtf?!',
+                content: validate.message,
+                ephemeral: true,
             });
             return;
         }
@@ -64,26 +66,18 @@ export class SetDailyDayNotificationChannelCommand implements Command {
         await interaction.deferReply();
 
         const options = interaction.options;
-        const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
+        const settings = await dbService.find(interaction.guild!) ?? GuildSettingsEntity.create({ id: interaction.guild!.id });
         if (!settings.dailyDayNotify) {
             settings.dailyDayNotify = { enabled: false };
         }
         settings.dailyDayNotify.channelToNotify = options.getChannel('channel')?.id;
-
-        const validate = this.validate(interaction);
-        if (!validate.isCorrect) {
-            await interaction.editReply({
-                content: validate.message,
-            });
-            return;
-        }
 
         await dbService.save(settings);
 
         await interaction.editReply({
             content: 'Done!',
         });
-    };
+    }
     get commandData(): ApplicationCommandData {
         return {
             name: this.name,
@@ -96,9 +90,13 @@ export class SetDailyDayNotificationChannelCommand implements Command {
                 },
             ],
         };
-    };
+    }
 
     private validate(interaction: CommandInteraction): { isCorrect: boolean, message: string } {
+        if (!interaction.guild) {
+            return { isCorrect: false, message: 'This is guild command, wtf?!' };
+        }
+
         const options = interaction.options;
         const channelId = options.getChannel('channel')!.id;
         const channel = interaction.guild!.channels.cache.get(channelId);
@@ -137,7 +135,7 @@ export class SetDailyDayNotificationRoleCommand implements Command {
         await interaction.editReply({
             content: 'Done!',
         });
-    };
+    }
     get commandData(): ApplicationCommandData {
         return {
             name: this.name,
@@ -150,5 +148,5 @@ export class SetDailyDayNotificationRoleCommand implements Command {
                 },
             ],
         };
-    };
+    }
 }
