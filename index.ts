@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
+import fs from 'fs';
 
 import { CommandManager } from '@command-manager';
 import { DBService } from '@database';
@@ -51,11 +52,17 @@ client.on('ready', async () => {
 
                 const { enabled, channelToNotify, roleTag } = settings.dailyDayNotify;
                 if (enabled) {
-                    const content = roleTag
-                        ? `${tagRole(roleTag, guild.roles.everyone.id)}\n` +
-                          `СЕГОДНЯ ${days[now.getDay()]}`
-                        : `СЕГОДНЯ ${days[now.getDay()]}`;
-                    const files = [days_imgs[now.getDay()]];
+                    const today = `${now.getDay()}_${now.getMonth()}`;
+                    const holydayPath = `img/holydays/${today}`;
+                    const defaultDayPath = days_imgs[now.getDay()];
+                    const isHolyday = fs.existsSync(holydayPath);
+
+                    const content = (
+                        roleTag ? `${tagRole(roleTag, guild.roles.everyone.id)}\n` : ''
+                    ) + (
+                        isHolyday ? 'СЕГОДНЯ ПРАЗДНИК' : `СЕГОДНЯ ${days[now.getDay()]}`
+                    );
+                    const files = [isHolyday ? holydayPath : defaultDayPath];
 
                     const channel = channelToNotify
                         ? guild.channels.cache.get(channelToNotify)
