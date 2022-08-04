@@ -7,6 +7,8 @@ import { CommandManager } from '@command-manager';
 import { DBService } from '@database';
 import { tagRole } from './utils';
 
+import { createAudioPlayer, createAudioResource, joinVoiceChannel, DiscordGatewayAdapterCreator, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice';
+
 dotenv.config()
 
 
@@ -30,14 +32,27 @@ const days_imgs = [
 ];
 
 
+export enum PossibleGreetings {
+    Flashbang = 'flashbang',
+    ZachemMenyaPrizvali = 'zachemMenyaPrizvali',
+};
+const greetingsMap: Record<PossibleGreetings, string> = {
+    [PossibleGreetings.Flashbang]: 'mp3/flashbangSound.mp3',
+    [PossibleGreetings.ZachemMenyaPrizvali]: 'mp3/zachemMenyaPrizvaliSound.mp3',
+};
+
+
 const client = new Client({
     intents: [
         'GUILDS',
         'GUILD_MESSAGES',
+        'GUILD_VOICE_STATES',
     ],
 });
 let commandManager: CommandManager;
 const dbService = new DBService();
+
+const player = createAudioPlayer();
 
 client.on('ready', async () => {
     const testRun = process.env.TEST_RUN === 'true';
@@ -97,6 +112,44 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     commandManager.handle(interaction);
+});
+
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    if (!newState.channelId) {
+        return;
+    }
+
+    const guild = oldState.guild;
+    const userId = oldState.id;
+    const guildSettings = await dbService.find(guild);
+    const settings = guildSettings?.voiceChannelGreetingsSettings;
+
+    if (!settings?.enabled) {
+        return;
+    }
+
+    const greetingType = settings.greetings.find(g => g.userId === userId)?.type;
+
+    if (!greetingType) {
+        return;
+    }
+
+    const connection = joinVoiceChannel({
+        channelId: newState.channelId,
+        guildId: guild.id,
+        adapterCreator: guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+    });
+
+    connection.subscribe(player);
+    const disconnectOnEnded = () => connection.disconnect();
+
+    player.once(AudioPlayerStatus.Idle, disconnectOnEnded);
+    connection.once(VoiceConnectionStatus.Disconnected, () => {
+        player.removeListener(AudioPlayerStatus.Idle, disconnectOnEnded);
+    });
+
+    const greetingSound = createAudioResource(greetingsMap[greetingType]);
+    player.play(greetingSound);
 });
 
 
