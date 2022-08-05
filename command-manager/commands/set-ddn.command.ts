@@ -1,5 +1,7 @@
 import { CommandInteraction, ApplicationCommandData } from 'discord.js';
+
 import { DBService, GuildSettingsEntity } from '@database';
+
 import { Command, CommandScope, CommandType } from '../command.interface';
 
 export class SetDailyDayNotificationFlagCommand implements Command {
@@ -20,9 +22,6 @@ export class SetDailyDayNotificationFlagCommand implements Command {
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
-        if (!settings.dailyDayNotify) {
-            settings.dailyDayNotify = { enabled: false };
-        }
         settings.dailyDayNotify.enabled = options.getBoolean('flag', true);
         await dbService.save(settings);
 
@@ -67,9 +66,6 @@ export class SetDailyDayNotificationChannelCommand implements Command {
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild!) ?? GuildSettingsEntity.create({ id: interaction.guild!.id });
-        if (!settings.dailyDayNotify) {
-            settings.dailyDayNotify = { enabled: false };
-        }
         settings.dailyDayNotify.channelToNotify = options.getChannel('channel')?.id;
 
         await dbService.save(settings);
@@ -126,9 +122,6 @@ export class SetDailyDayNotificationRoleCommand implements Command {
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
-        if (!settings.dailyDayNotify) {
-            settings.dailyDayNotify = { enabled: false };
-        }
         settings.dailyDayNotify.roleTag = options.getRole('role')?.id;
         await dbService.save(settings);
 

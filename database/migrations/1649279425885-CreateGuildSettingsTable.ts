@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateGuildSettingsTable1649279425885 implements MigrationInterface {
-    private tableName = 'guild_settings_entity';
+    private readonly tableName = 'guild_settings_entity';
     readonly name = 'CreateGuildSettingsTable1649279425885';
 
     public async up(queryRunner: QueryRunner): Promise<void> {

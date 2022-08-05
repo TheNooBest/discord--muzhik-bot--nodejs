@@ -1,6 +1,6 @@
 import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 import { Snowflake } from 'discord.js';
-import { PossibleGreetings } from 'index';
+import { PossibleGreetings } from '@voice-state-manager';
 
 export interface DailyDayNotifySettings {
     enabled: boolean;               // if needed to notify this guild
@@ -22,9 +22,9 @@ export class GuildSettingsEntity extends BaseEntity {
     @PrimaryColumn({ name: 'id', type: 'varchar', nullable: false, unique: true })
     id!: Snowflake;
 
-    @Column({ name: 'daily_day_notify', type: 'jsonb', nullable: true })
-    dailyDayNotify?: DailyDayNotifySettings;
+    @Column({ name: 'daily_day_notify', type: 'jsonb', nullable: false })
+    dailyDayNotify: DailyDayNotifySettings = { enabled: false };
 
-    @Column({ name: 'voice_channel_greetings_settings', type: 'jsonb', nullable: true })
-    voiceChannelGreetingsSettings?: VoiceChannelGreetingsSettings;
+    @Column({ name: 'voice_channel_greetings_settings', type: 'jsonb', nullable: false })
+    voiceChannelGreetingsSettings: VoiceChannelGreetingsSettings = { enabled: false, greetings: [] };
 }

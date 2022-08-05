@@ -1,6 +1,8 @@
+import { ApplicationCommandData, CommandInteraction } from 'discord.js';
+
 import { DBService, GuildSettingsEntity } from '@database';
-import { ApplicationCommandData, CacheType, CommandInteraction } from 'discord.js';
-import { PossibleGreetings } from 'index';
+import { PossibleGreetings } from '@voice-state-manager';
+
 import { Command, CommandScope, CommandType } from '../command.interface';
 
 export class SetGreetingFlagCommand implements Command {
@@ -21,10 +23,6 @@ export class SetGreetingFlagCommand implements Command {
 
         const options = interaction.options;
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
-
-        if (!settings.voiceChannelGreetingsSettings) {
-            settings.voiceChannelGreetingsSettings = { enabled: false, greetings: [] };
-        }
 
         settings.voiceChannelGreetingsSettings.enabled = options.getBoolean('flag', true);
         await dbService.save(settings);
@@ -75,11 +73,7 @@ export class SetGreetingTypeCommand implements Command {
 
         const settings = await dbService.find(interaction.guild) ?? GuildSettingsEntity.create({ id: interaction.guild.id });
 
-        if (!settings.voiceChannelGreetingsSettings) {
-            settings.voiceChannelGreetingsSettings = { enabled: false, greetings: [] };
-        }
-
-        const currentGreeting = settings.voiceChannelGreetingsSettings.greetings.find(g => interaction.user.id);
+        const currentGreeting = settings.voiceChannelGreetingsSettings.greetings.find(g => g.userId === interaction.user.id);
         if (!currentGreeting) {
             settings.voiceChannelGreetingsSettings.greetings.push({
                 userId: interaction.user.id,
